@@ -2,47 +2,56 @@
 # Licensed under the MIT License.
 #
 # Description:
-#   Extended script: captures ALL messages (incoming + outgoing).
-#   Useful for monitoring everything your account sees or sends.
+#   Script to capture the first 20 incoming messages, then stop automatically.
 #
 # Note:
 #   - Never share your string session.
 #   - Only use this for your own account.
 
 from telethon import TelegramClient, events
+from telethon.sessions import StringSession
 import asyncio
-import os
 
 # -------------------------------
-# Configuration
+# Hardcoded Credentials
 # -------------------------------
-API_ID = int(os.getenv("TG_API_ID", "123456"))         
-API_HASH = os.getenv("TG_API_HASH", "your_api_hash")   
-STRING_SESSION = os.getenv("TG_STRING_SESSION", "your_string_session_here")
+API_ID = 123456  # replace with your API_ID (integer)
+API_HASH = "your_api_hash_here"  # replace with your API_HASH
+STRING_SESSION = "your_string_session_here"  # replace with your STRING_SESSION
 
 # -------------------------------
 # Initialize Telegram Client
 # -------------------------------
 client = TelegramClient(
-    session=STRING_SESSION,
+    session=StringSession(STRING_SESSION),
     api_id=API_ID,
     api_hash=API_HASH
 )
 
 # -------------------------------
-# Event Listener for ALL Messages
+# Globals
 # -------------------------------
-@client.on(events.NewMessage(incoming=True, outgoing=True))  # include outgoing too
+message_count = 0
+MAX_MESSAGES = 200
+
+# -------------------------------
+# Event Listener: Capture ANY message
+# -------------------------------
+@client.on(events.NewMessage(incoming=True))
 async def message_handler(event):
     """
-    Handle all new messages (incoming + outgoing).
-    Prints sender info and message text.
+    Capture and print every incoming message until MAX_MESSAGES is reached.
     """
+    global message_count
     try:
         sender = await event.get_sender()
         sender_name = getattr(sender, "first_name", "Unknown")
-        direction = "⬅️ Incoming" if event.is_private and event.is_incoming else "➡️ Outgoing"
-        print(f"\n{direction} message from {sender_name} (@{sender.username}):\n{event.raw_text}\n")
+        print(f"\n📩 Message #{message_count+1} from {sender_name}:\n{event.raw_text}\n")
+
+        message_count += 1
+        if message_count >= MAX_MESSAGES:
+            print("\n✅ Reached 200 messages. Stopping client...\n")
+            await client.disconnect()
     except Exception as e:
         print(f"[ERROR] Failed to process message: {e}")
 
@@ -50,7 +59,7 @@ async def message_handler(event):
 # Main Entrypoint
 # -------------------------------
 async def main():
-    print("🚀 Telegram client started. Listening for ALL messages...\n")
+    print(f"🚀 Telegram client started. Capturing first {MAX_MESSAGES} incoming messages...\n")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
