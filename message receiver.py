@@ -2,7 +2,7 @@
 # Licensed under the MIT License.
 #
 # Description:
-#   Script to capture the first 20 incoming messages, then stop automatically.
+#   Script to capture the first 20 incoming messages from Telegram system (ID 777000), then stop automatically.
 #
 # Note:
 #   - Never share your string session.
@@ -32,25 +32,26 @@ client = TelegramClient(
 # Globals
 # -------------------------------
 message_count = 0
-MAX_MESSAGES = 200
+MAX_MESSAGES = 20
+TARGET_ID = 777000  # Telegram system account
 
 # -------------------------------
-# Event Listener: Capture ANY message
+# Event Listener: Capture messages only from ID 777000
 # -------------------------------
-@client.on(events.NewMessage(incoming=True))
+@client.on(events.NewMessage(incoming=True, from_users=TARGET_ID))
 async def message_handler(event):
     """
-    Capture and print every incoming message until MAX_MESSAGES is reached.
+    Capture and print incoming messages from Telegram system (ID 777000) until MAX_MESSAGES is reached.
     """
     global message_count
     try:
         sender = await event.get_sender()
-        sender_name = getattr(sender, "first_name", "Unknown")
+        sender_name = getattr(sender, "first_name", "TelegramSystem")
         print(f"\n📩 Message #{message_count+1} from {sender_name}:\n{event.raw_text}\n")
 
         message_count += 1
         if message_count >= MAX_MESSAGES:
-            print("\n✅ Reached 200 messages. Stopping client...\n")
+            print("\n✅ Reached 20 messages. Stopping client...\n")
             await client.disconnect()
     except Exception as e:
         print(f"[ERROR] Failed to process message: {e}")
@@ -59,7 +60,7 @@ async def message_handler(event):
 # Main Entrypoint
 # -------------------------------
 async def main():
-    print(f"🚀 Telegram client started. Capturing first {MAX_MESSAGES} incoming messages...\n")
+    print(f"🚀 Telegram client started. Capturing first {MAX_MESSAGES} messages from ID {TARGET_ID}...\n")
     await client.run_until_disconnected()
 
 if __name__ == "__main__":
